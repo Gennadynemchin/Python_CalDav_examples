@@ -1,4 +1,5 @@
 from caldav import DAVClient
+from convert_data import from_byte_to_dict
 from icalendar import Event, vCalAddress, vText
 from datetime import datetime, timedelta
 from settings.logger import logger
@@ -7,10 +8,7 @@ from settings.settings import creds
 
 def create_event(
     creds,
-    deadline: str,
-    summary: str,
-    attendees: list,
-    description: str | None = None,
+    event_data: dict,
 ) -> str:
     with DAVClient(
         url=creds.caldav_url,
@@ -19,6 +17,12 @@ def create_event(
     ) as client:
         calendar_tracker = client.calendar(url=creds.calendar_url)
         event = Event()
+        
+        deadline = event_data.get("deadline")
+        summary = event_data.get("summary")
+        description = event_data.get("description")
+        attendees = event_data.get("attendees")
+        
         deadline_date = datetime.strptime(deadline, "%Y-%m-%d").date()
         event.add("dtstart", deadline_date)
         event.add("dtend", deadline_date + timedelta(days=1))
@@ -47,9 +51,13 @@ def create_event(
 
 
 if __name__ == "__main__":
+    tracker_data = from_byte_to_dict(
+        b'{"attendees": [test1@test.ru, test2@test.ru],\
+                                        "deadline": "2027-08-29",\
+                                        "summary": "Title of task",\
+                                        "description": "Description of task"}'
+    )
     create_event(
         creds,
-        deadline="2024-08-28",
-        summary="August, 28th",
-        attendees=["test1@test.ru", "test2@test.ru"],
+        tracker_data,
     )

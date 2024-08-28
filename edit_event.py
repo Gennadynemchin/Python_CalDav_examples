@@ -1,4 +1,5 @@
 from caldav import DAVClient
+from convert_data import from_byte_to_dict
 from icalendar import vCalAddress, vText
 from datetime import datetime, timedelta
 from settings.logger import logger
@@ -8,8 +9,7 @@ from settings.settings import creds, Credentials
 def edit_event(
     creds: Credentials,
     event_url: str,
-    new_date: str | None = None,
-    attendees: list | None = None,
+    event_data: dict,
 ):
     with DAVClient(
         url=creds.caldav_url,
@@ -17,7 +17,8 @@ def edit_event(
         password=creds.caldav_password,
     ) as client:
         event = client.calendar(url=creds.calendar_url).event_by_url(event_url)
-
+        new_date = event_data.get("deadline")
+        attendees = event_data.get("attendees")
         event.load()
         logger.info(f"Loaded event: {event}")
         event.vobject_instance.vevent.dtstamp.value = datetime.now()
@@ -45,8 +46,13 @@ def edit_event(
 
 
 if __name__ == "__main__":
+    tracker_data = from_byte_to_dict(
+                                        b'{"attendees": [test11@test.ru, test22@test.ru],\
+                                        "deadline": "2027-08-27"}'
+    )
+
     edit_event(
         creds,
-        "LINK TO ICS",
-        attendees=["test3@test.ru"],
+        "https://caldav.yandex.ru/calendars/gnemchin%40yandex.ru/events-30436394/11be840a-6523-11ef-bd17-86c1c6bdf2ad.ics",
+        tracker_data,
     )
