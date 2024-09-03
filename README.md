@@ -9,9 +9,20 @@
 
 Для запуска скрипта необходимо:
 
-- Заполнить файл sample.env полученными данными. Для дальнейшей работы файл необходимо переименовать в .env
-- Подготовить виртуальное окружение (опционально): `python -m venv <название_виртуального_окружения>`. Подробнее про виртуальное окружение: https://docs.python.org/3/library/venv.html
-- Установить зависимости, указанные в requirements.txt: `pip install -r requiremenets.txt`
+- Создать две функции в сервисе Cloud Functions. Подробнее тут: https://yandex.cloud/ru/docs/functions
+- Для каждой функции используйте соответствующий архив: create_event и edit_event
+- Заполните данные для запуска функций в файле sample.env, после чего переименуйте его в .env:
+
+CALDAV_URL=https://caldav.yandex.ru
+CALDAV_USERNAME=user@yandex.ru
+CALDAV_PASSWORD=password
+CALENDAR_URL=calendars/user%40yandex.ru/events-00000000/
+ORGANIZER=user@yandex.ru # Организатор встреч. Рекомендуется использовать обезличенную учетную запись,
+на которую будет выдан токен
+ORGHEADER=X-Cloud-Org-ID или X-Org-ID
+ORGID=000
+EVENT_URL_FIELD=000--eventURL # Идентификатор поля в Трекере, которое используется для записи ссылки на событие (дедлайн задачи)
+OAUTH_TOKEN=y0_000 # Токен для доступа к Яндекс Трекеру
+
 
 ## Запуск
-

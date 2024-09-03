@@ -1,14 +1,21 @@
+import base64
+import re
 from caldav import DAVClient
-from convert_data import from_byte_to_dict
 from icalendar import vCalAddress, vText
 from datetime import datetime, timedelta
-from settings.logger import logger
 from settings.settings import creds, Credentials
+
+
+def from_byte_to_dict(tracker_data: bytes) -> dict:
+    decoded_string = tracker_data.decode("utf-8")
+    pattern = r"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})"
+    corrected_string = re.sub(pattern, r'"\1"', decoded_string)
+    output_data = eval(corrected_string)
+    return output_data
 
 
 def edit_event(
     creds: Credentials,
-    event_url: str,
     event_data: dict,
 ):
     with DAVClient(
@@ -16,15 +23,18 @@ def edit_event(
         username=creds.caldav_username,
         password=creds.caldav_password,
     ) as client:
-        event = client.calendar(url=creds.calendar_url).event_by_url(event_url)
+        event = client.calendar(url=creds.calendar_url).event_by_url(
+            event_data["event_url"]
+        )
         new_date = event_data.get("deadline")
         attendees = event_data.get("attendees")
         event.load()
-        logger.info(f"Loaded event: {event}")
         event.vobject_instance.vevent.dtstamp.value = datetime.now()
 
+        organizer = vCalAddress(f"MAILTO:{creds.organizer}")
+        event.icalendar_component["organizer"] = organizer
+
         if new_date:
-            logger.info(f"Found new date: {new_date}")
             new_date_formatted = datetime.strptime(new_date, "%Y-%m-%d").date()
             event.vobject_instance.vevent.dtstart.value = new_date_formatted
             event.vobject_instance.vevent.dtend.value = new_date_formatted + timedelta(
@@ -32,7 +42,6 @@ def edit_event(
             )
 
         if attendees:
-            logger.info(f"Found attendees: {attendees}")
             new_attendees = []
             for attendee in attendees:
                 new_attendee = vCalAddress(f"MAILTO:{attendee}")
@@ -41,18 +50,10 @@ def edit_event(
             event.icalendar_component["attendee"] = new_attendees
 
         event.save()
-        logger.info(f"Saved event: {event}")
         return event
 
 
-if __name__ == "__main__":
-    tracker_data = from_byte_to_dict(
-                                        b'{"attendees": [test11@test.ru, test22@test.ru],\
-                                        "deadline": "2027-08-27"}'
-    )
-
-    edit_event(
-        creds,
-        "https://caldav.yandex.ru/calendars/gnemchin%40yandex.ru/events-30436394/11be840a-6523-11ef-bd17-86c1c6bdf2ad.ics",
-        tracker_data,
-    )
+def main(event, context):
+    event_data = base64.b64decode(event["body"])
+    tracker_data = from_byte_to_dict(event_data)
+    edit_event(creds, tracker_data)
