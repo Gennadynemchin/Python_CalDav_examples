@@ -25,11 +25,11 @@ ORGID=000
 EVENT_URL_FIELD=000--eventURL # Идентификатор поля в Трекере, которое используется для записи ссылки на событие (дедлайн задачи)
 OAUTH_TOKEN=y0_000 # Токен для доступа к Яндекс Трекеру
 ```
-Функция create_event:
+Функция create_event. Точка входа в Cloud Functions create_event.main:
 
 ![alt text](image.png)
 
-Функция edit_event:
+Функция edit_event. Точка входа в Cloud Functions edit_event.main:
 
 ![alt text](image-1.png)
 
